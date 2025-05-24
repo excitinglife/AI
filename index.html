@@ -1,72 +1,121 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>감정 인식 AI</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f0f4f8;
-      text-align: center;
-      margin: 0;
-      padding: 40px 20px;
-    }
-
-    h1 {
-      color: #333;
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
-    }
-
-    h4 {
-      color: #555;
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
-    }
-
-    p {
-      font-size: 1rem;
-      color: #666;
-      margin-bottom: 30px;
-    }
-
-    button {
-      padding: 12px 24px;
-      font-size: 1rem;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      margin: 20px auto;
-      transition: background-color 0.3s ease;
-    }
-
-    button:disabled {
-      background-color: #a5d6a7;
-      cursor: not-allowed;
-    }
-
-    #webcam-container {
-      margin-top: 30px;
-    }
-
-    #label-container {
-      margin-top: 20px;
-      font-size: 1.1rem;
-      color: #222;
-    }
-
-    .label {
-      margin: 5px;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <title>감정 인식 AI - 웹캠 테스트</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f4f8;
+            text-align: center;
+            margin: 0; padding: 50px;
+        }
+        h1 { color: #333; font-size: 2.5rem; }
+        h4 { color: #555; font-size: 1.2rem; }
+        p { font-size: 1rem; color: #666; }
+        button {
+            padding: 12px 24px;
+            font-size: 1rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 20px auto;
+        }
+        button:disabled {
+            background-color: #a5d6a7;
+            cursor: not-allowed;
+        }
+        #webcam-container {
+            margin-top: 30px;
+        }
+        #label-container {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            color: #222;
+        }
+        .label {
+            margin: 5px;
+        }
+        #error-message {
+            margin-top: 30px;
+            color: red;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
 
-  <h1>감정을 읽는 인공지능</h1>
-  <h4>지금 기분이 어떤가요?</h4>
-  <p>표정으로 당신의 기분을 읽어볼게요.<br>아래 버튼을 눌러 시작해보세요!</p>
+<h1>감정을 읽는 인공지능</h1>
+<h4>지금 기분이 어떤가요?</h4>
+<p>표정으로 당신의 기분을 읽어볼게요.</p>
 
-  <button id="start-button" onclick="init()">AI 시작하기
+<button id="start-btn">Start</button>
+<div id="webcam-container"></div>
+<div id="label-container"></div>
+<div id="error-message"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+<script>
+    const URL = "https://teachablemachine.withgoogle.com/models/wv1al21V1/";
+    let model, webcam, labelContainer, maxPredictions;
+    const startBtn = document.getElementById('start-btn');
+    const errorMessage = document.getElementById('error-message');
+
+    startBtn.addEventListener('click', async () => {
+        startBtn.disabled = true;
+        errorMessage.innerText = '';
+        try {
+            await init();
+        } catch (err) {
+            errorMessage.innerText = '웹캠 또는 모델 로딩 중 오류가 발생했습니다. ' + err.message;
+            startBtn.disabled = false;
+        }
+    });
+
+    async function init() {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+
+        model = await tmImage.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
+
+        const flip = true;
+        webcam = new tmImage.Webcam(320, 320, flip); // 좀 더 큰 사이즈로 설정
+        await webcam.setup(); // 권한 요청 여기서 발생
+        await webcam.play();
+
+        document.getElementById("webcam-container").innerHTML = ""; // 초기화
+        document.getElementById("webcam-container").appendChild(webcam.canvas);
+
+        labelContainer = document.getElementById("label-container");
+        labelContainer.innerHTML = "";
+        for (let i = 0; i < maxPredictions; i++) {
+            const div = document.createElement("div");
+            div.classList.add('label');
+            labelContainer.appendChild(div);
+        }
+
+        window.requestAnimationFrame(loop);
+    }
+
+    async function loop() {
+        webcam.update();
+        await predict();
+        window.requestAnimationFrame(loop);
+    }
+
+    async function predict() {
+        const prediction = await model.predict(webcam.canvas);
+        for (let i = 0; i < maxPredictions; i++) {
+            const classPrediction =
+                prediction[i].className + ": " + (prediction[i].probability * 100).toFixed(1) + "%";
+            labelContainer.childNodes[i].innerText = classPrediction;
+        }
+    }
+</script>
+
+</body>
+</html>
