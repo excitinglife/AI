@@ -1,19 +1,67 @@
-<html>
+<html lang="ko">
 <head>
-    <title>Teachable Machine Demo</title>
+    <meta charset="UTF-8">
+    <title>감정 인식 AI</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f4f8;
+            text-align: center;
+            margin: 0;
+            padding: 50px;
+        }
+        h1 {
+            color: #333;
+            font-size: 2.5rem;
+        }
+        h4 {
+            color: #555;
+            font-size: 1.2rem;
+        }
+        p {
+            font-size: 1rem;
+            color: #666;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 1rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 20px auto;
+        }
+        button:disabled {
+            background-color: #a5d6a7;
+            cursor: not-allowed;
+        }
+        #webcam-container {
+            margin-top: 30px;
+        }
+        #label-container {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            color: #222;
+        }
+        .label {
+            margin: 5px;
+        }
+    </style>
 </head>
 <body>
+
     <h1>감정을 읽는 인공지능</h1>
     <h4>지금 기분이 어떤가요?</h4>
     <p>표정으로 당신의 기분을 읽어볼게요.</p>
-    <div>Teachable Machine Image Model</div>
-    <button type="button" onclick="init()">Start</button>
+
+    <button id="start-button" onclick="init()">AI 시작하기</button>
     <div id="webcam-container"></div>
     <div id="label-container"></div>
 
-    <!-- Teachable Machine 및 TensorFlow 라이브러리 -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    <!-- TensorFlow.js 및 Teachable Machine Image 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
 
     <script type="text/javascript">
         const URL = "./my_model/";
@@ -21,22 +69,31 @@
         let model, webcam, labelContainer, maxPredictions;
 
         async function init() {
+            // 버튼 비활성화
+            document.getElementById("start-button").disabled = true;
+            document.getElementById("start-button").innerText = "AI 작동 중...";
+
             const modelURL = URL + "model.json";
             const metadataURL = URL + "metadata.json";
 
+            // 모델 및 메타데이터 로드
             model = await tmImage.load(modelURL, metadataURL);
             maxPredictions = model.getTotalClasses();
 
+            // 웹캠 설정
             const flip = true;
             webcam = new tmImage.Webcam(200, 200, flip);
             await webcam.setup();
             await webcam.play();
             window.requestAnimationFrame(loop);
 
+            // 화면에 웹캠과 레이블 추가
             document.getElementById("webcam-container").appendChild(webcam.canvas);
             labelContainer = document.getElementById("label-container");
             for (let i = 0; i < maxPredictions; i++) {
-                labelContainer.appendChild(document.createElement("div"));
+                const label = document.createElement("div");
+                label.className = "label";
+                labelContainer.appendChild(label);
             }
         }
 
@@ -50,7 +107,7 @@
             const prediction = await model.predict(webcam.canvas);
             for (let i = 0; i < maxPredictions; i++) {
                 const classPrediction =
-                    prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+                    `${prediction[i].className}: ${prediction[i].probability.toFixed(2)}`;
                 labelContainer.childNodes[i].innerHTML = classPrediction;
             }
         }
