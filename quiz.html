@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>당신의 숨겨진 마법 능력은?</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+      padding: 20px;
+    }
+    .quiz-container {
+      max-width: 600px;
+      margin: auto;
+      background: linear-gradient(145deg, #ffe0f0, #e0f7ff);
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    .question {
+      font-weight: bold;
+      margin-bottom: 12px;
+      font-size: 1.3em;
+      color: #4b0082;
+    }
+    .answers button {
+      display: block;
+      margin: 10px 0;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #ffecd2 0%, #fcb69f 100%);
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: bold;
+      color: #333;
+      transition: transform 0.2s, background 0.3s;
+    }
+    .answers button:hover {
+      transform: scale(1.03);
+      background: linear-gradient(90deg, #f6d365 0%, #fda085 100%);
+    }
+    #result {
+      margin-top: 30px;
+      font-size: 1.2em;
+      font-weight: bold;
+      text-align: center;
+      background: linear-gradient(145deg, #c1f0c1, #f7f0ba);
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      color: #444;
+    }
+    #retryBtn {
+      margin-top: 25px;
+      display: inline-block;
+      padding: 12px 24px;
+      background: linear-gradient(145deg, #c2e9fb, #a1c4fd);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: bold;
+      color: #2c3e50;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    #retryBtn:hover {
+      background: linear-gradient(145deg, #89f7fe, #66a6ff);
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <div id="quiz"></div>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const questions = [
+      { question: "아침에 눈을 떴을 때 가장 먼저 드는 생각은?", answers: ["또 하루가 시작됐다…", "오늘은 무슨 일이 벌어질까?", "5분만 더…", "커피… 커피…!!"], types: ["예언자", "혼돈 마법사", "정령 마법사", "연금술사"] },
+      { question: "갑자기 시간이 멈춘다면 당신은?", answers: ["주변을 구경한다", "장난을 친다", "내가 왜 멈춘 건지 고민한다", "아무것도 안 하고 쉰다"], types: ["정령 마법사", "혼돈 마법사", "예언자", "연금술사"] },
+      { question: "마법 지팡이를 고르라면?", answers: ["반짝이는 수정 지팡이", "나무로 만든 소박한 지팡이", "검은 안개가 감도는 지팡이", "지팡이보다 손이 편한데?"], types: ["예언자", "정령 마법사", "혼돈 마법사", "연금술사"] },
+      { question: "친구가 갑자기 눈물을 흘린다면?", answers: ["등을 토닥여준다", "왜 울어? 당황한다", "조용히 곁에 있는다", "이유를 캐묻는다"], types: ["정령 마법사", "혼돈 마법사", "예언자", "연금술사"] },
+      { question: "이상형은?", answers: ["나를 잘 이해해주는 사람", "재밌고 통통 튀는 사람", "비밀스러운 사람", "같이 무언가를 만드는 사람"], types: ["정령 마법사", "혼돈 마법사", "예언자", "연금술사"] },
+      { question: "시간여행을 할 수 있다면?", answers: ["미래로 간다", "과거로 간다", "지금에 머문다", "아무 때로나 왔다 갔다 한다"], types: ["예언자", "정령 마법사", "연금술사", "혼돈 마법사"] },
+      { question: "마법학교에서 좋아할 과목은?", answers: ["마법 역사", "마법 실습", "마법 약학", "마법 동물학"], types: ["예언자", "혼돈 마법사", "연금술사", "정령 마법사"] },
+      { question: "가장 끌리는 색은?", answers: ["하늘색", "보라색", "노란색", "초록색"], types: ["예언자", "혼돈 마법사", "연금술사", "정령 마법사"] },
+      { question: "게임 속에서 당신의 역할은?", answers: ["전략가", "탐험가", "연구자", "트릭스터"], types: ["예언자", "정령 마법사", "연금술사", "혼돈 마법사"] },
+      { question: "마법 동물을 키운다면?", answers: ["말하는 고양이", "작은 용", "빛나는 나비", "사라지는 토끼"], types: ["예언자", "혼돈 마법사", "정령 마법사", "연금술사"] }
+    ];
+
+    let current = 0;
+    const score = { "정령 마법사": 0, "혼돈 마법사": 0, "연금술사": 0, "예언자": 0 };
+
+    const quizEl = document.getElementById("quiz");
+    const resultEl = document.getElementById("result");
+
+    function showQuestion() {
+      if (current >= questions.length) {
+        showResult();
+        return;
+      }
+      const q = questions[current];
+      quizEl.innerHTML = `<div class="question">Q${current + 1}. ${q.question}</div>`;
+      const answers = q.answers.map((ans, idx) => `<button onclick="selectAnswer('${q.types[idx]}')">${ans}</button>`).join('');
+      quizEl.innerHTML += `<div class="answers">${answers}</div>`;
+    }
+
+    function selectAnswer(type) {
+      score[type]++;
+      current++;
+      showQuestion();
+    }
+
+    function showResult() {
+      quizEl.innerHTML = "";
+      const sorted = Object.entries(score).sort((a, b) => b[1] - a[1]);
+      const topType = sorted[0][0];
+      const descriptions = {
+        "정령 마법사": "🍃 자연과 대화하는 능력을 지닌 당신! 조용히 주변을 관찰하고, 사람보다 나무와 더 친한 타입이에요.",
+        "혼돈 마법사": "🔥 예측불허, 감정 폭발형! 마법도 직감으로 휘두릅니다. 그런데 그게 또 먹혀요.",
+        "연금술사": "🧪 모든 걸 조합해 새로운 걸 만드는 당신. 머릿속에 늘 실험이 가득해요.",
+        "예언자": "🔮 직관과 감이 예리한 타입. 모든 것을 말없이 간파하는 당신은… 사실 다 알고 있었잖아요?"
+      };
+      resultEl.innerHTML = `
+        <div>✨ 당신은 <strong>${topType}</strong> 입니다! ✨<br><br>${descriptions[topType]}</div>
+        <button id="retryBtn" onclick="restartQuiz()">🔁 다시 풀기</button>
+      `;
+    }
+
+    function restartQuiz() {
+      current = 0;
+      for (let key in score) score[key] = 0;
+      resultEl.innerHTML = "";
+      showQuestion();
+    }
+
+    showQuestion();
+  </script>
+</body>
+</html>
